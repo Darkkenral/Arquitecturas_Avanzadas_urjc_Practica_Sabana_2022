@@ -76,3 +76,4 @@ class Simulacion():
     def __init__(self, n_columnas=75, n_filas=75, n_manadas=2):
         self.n_manadas = n_manadas
         self.mapa = Mapa(n_columnas, n_filas)
+
