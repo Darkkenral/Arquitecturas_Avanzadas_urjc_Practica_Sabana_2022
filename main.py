@@ -1,4 +1,4 @@
-
+import Simulacion as simu
 
 if __name__ == "__main__":
     main()
@@ -61,10 +61,21 @@ def main():
 
     print('\n')
     opcion = input('--Porfavor introduzca una opcion--::')
-
     if opcion == 3:
         quit()
     elif opcion == 2:
-        pass
+        juego = simu.Simulacion()
+        juego.run()
     elif opcion == 1:
-        pass
+        n_columnas = input('--Porfavor introduzca el numero de columnas--::')
+        n_filas = input('--Porfavor introduzca el numero de filas--::')
+        n_animales=input('--Porfavor introduzca el numero de animales --::')
+        n_manadas=input('--Porfavor introduzca  el numero de manadas--::')
+        juego = simu.Simulacion(n_columnas,n_filas,n_animales,n_manadas)
+        juego.run()
+    print('------SIMULACION TERMINADA------')
+    input('--Porfavor presione enter para terminar-::')
+    
+
+
+# Controlar nnumero de animales y de manadas
