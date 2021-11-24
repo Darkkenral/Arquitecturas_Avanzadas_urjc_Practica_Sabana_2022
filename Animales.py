@@ -6,9 +6,9 @@ from enum import Enum
 
 
 class Tipo(Enum):
-    cebra = 'Cebra'
-    hiena = 'Hiena'
-    leon = 'Leon'
+    Cebra = 'C'
+    Hiena = 'H'
+    Leon = 'L'
 
 
 class Animal(threading.Thread):
@@ -20,7 +20,7 @@ class Animal(threading.Thread):
     vector_movimiento = [(-1, 1), (0, 1), (1, 1), (1, 0),
                          (1, -1), (0, -1), (-1, -1)]
 
-    def __init__(self, sabana: simulacion, tipo: Tipo, posicion: tuple, manada):
+    def __init__(self, sabana: simulacion, tipo, posicion: tuple, manada):
         '''[summary]
 
         Parameters
@@ -37,7 +37,7 @@ class Animal(threading.Thread):
             [description]
         '''
         self.sabana = sabana
-        self.tipo = tipo
+        self.tipo = Tipo(tipo)
         self.posicion = posicion
         # CAMBIAR POR UNA CLASE Y UN MUTEX
         self.manada = manada
