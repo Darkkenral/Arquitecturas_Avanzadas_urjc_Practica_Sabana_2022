@@ -29,6 +29,9 @@ class Casilla():
     def get_position(self):
         return self.posicion
 
+    def set_animal(self, animal):
+        self.animal = animal
+
     def get_mutex(self):
         return self.mutex
 
@@ -51,7 +54,7 @@ class Mapa():
             Numero de filas de la matriz
         '''
         self.tam_mapa = (c-1, f-1)
-        for i_c in range(0,c):
+        for i_c in range(0, c):
             self.matriz_mapa.append([])
             for i_f in range(f):
                 self.matriz_mapa[i_c].append(Casilla(None, i_c, i_f))
@@ -60,16 +63,20 @@ class Mapa():
         return self.tam_mapa
 
     def get_animal(self, posicion: tuple):
-        print('posicion'+str(posicion))
-        print('tamaño'+str(self.tam_mapa))
-
-        return self.matriz_mapa[posicion[0]][posicion[1]].get_animal()
-
+        
+        animal=self.matriz_mapa[posicion[0]][posicion[1]].get_animal()
+        if animal is None:
+            return ' '
+        return animal
     def casilla_es_vacia(self, posicion: tuple):
         return self.get_animal(posicion) == None
 
     def set_animal(self, posicion: tuple, animal):
-        self.matriz_mapa[posicion[0]][posicion[1]] = animal
+        print('posicion'+str(posicion))
+        print('tamaño'+str(self.tam_mapa))
+        print(self)
+
+        self.matriz_mapa[posicion[0]][posicion[1]].set_animal(animal)
 
     def delete_animal(self, posicion: tuple):
         self.matriz_mapa[posicion[0]][posicion[1]] = None
@@ -85,13 +92,18 @@ class Mapa():
         '''
         string = [
             ('--------------------------------------SIMULACION---------------------------------------------------')]
-        for e_c in self.matriz_mapa:
-            for e_f in e_c:
-                string += ['['+str(e_f.get_animal())+']']
-                string += ['\n']
+        string += ['\n']
+        for e_c in range(self.tam_mapa[0]):
+            aux=[]
+            for e_f in range(self.tam_mapa[1]):
+                aux += ['['+str(self.matriz_mapa[e_c]
+                                   [e_f].get_animal())+']']
+            aux += ['\n']
+            string += ' '.join(aux)
+        string += ['\n']
         string += [('--------------------------------------SIMULACION---------------------------------------------------')]
 
-        return ' '.join(string)
+        return ''.join(string)
 
 
 class Simulacion():
@@ -209,34 +221,41 @@ class Simulacion():
 
         for manada, animales in dic_animales.items():
             tope_lista = len(animales)-1
-            tope_cuadricula=int(tope_lista/2)
+            tope_cuadricula = int(tope_lista/2)
             pos_inic = self.get_pos__ini_valida(tope_lista)
+
             c = pos_inic[0]
             f = pos_inic[1]
             for a in animales:
                 self.mapa.set_animal((c, f), a)
                 c += 1
-                if(c % tope_cuadricula==0):
+                if(c % tope_cuadricula == 0):
                     f += 1
+            
 
     def get_pos__ini_valida(self, long_lista_animales):
         max_leng = self.mapa.get_tammapa()
         reintentar = True
+        vacia = True
         while (reintentar == True):
-            posicion = (rdm.randint(0, long_lista_animales),
-                        rdm.randint(0, long_lista_animales))
-            if not(posicion[0] >= max_leng[0] and posicion[1] >= max_leng[1]):
-                if self.mapa.casilla_es_vacia(posicion):
-                    c = posicion[0]
-                    top_c = c+long_lista_animales
-                    f = posicion[1]
+            posicion = (rdm.randint(0, max_leng[0]-1),
+                        rdm.randint(0, max_leng[1]-1))
+            if self.mapa.casilla_es_vacia(posicion):
+                c = posicion[0]
+                top_c = c + int(long_lista_animales)/2
+                f = posicion[1]
+                if (top_c <= max_leng[0]-1):
                     vacia = True
-                    while(c != top_c) and (vacia):
-                        if not(self.mapa.casilla_es_vacia((c, f))):
+                    while(c <= top_c) and (vacia):
+                        if not(self.mapa.casilla_es_vacia((c, f))) and (f <= max_leng[0]-1):
                             vacia = False
                         c += 1
-                if vacia is True:
-                    reintentar = False
+                        if(c % top_c == 0):
+                            f += 1
+                        print('debugg')
+            if vacia is True:
+                reintentar = False
+        
         return posicion
 
     def __str__(self):

@@ -16,7 +16,7 @@ class Animal(threading.Thread):
     Clase animales, hereda de threads y es la clase padre de todos los animales del juego 
 
     '''
-    id_animal = itertools.count
+    id_animal = itertools.count()
     vector_movimiento = [(-1, 1), (0, 1), (1, 1), (1, 0),
                          (1, -1), (0, -1), (-1, -1)]
 
@@ -49,7 +49,7 @@ class Animal(threading.Thread):
         self.sabana
 
     def __str__(self):
-        return str(self.tipo)+'(ID:'+self.id_animal + ')'+' (M:' + str(self.manada)+')'
+        return str(self.tipo.value)+'(ID:'+str(self.id_animal) + ')'+' (M:' + str(self.manada)+')'
 
     # SI CAZO BLOQUEO TODO, LUEGO ELIJO LAS POTENCIALES PRESAS, SUELTO LO QUE NO USO, ME DESPLAZO Y LIBERO LOS MUTEX
     # EN EL MOVIMIENTO HAGO MUTEX EN TODO Y ME MUEVO
