@@ -1,6 +1,7 @@
 import random as rdm
 import threading
 import time
+
 import Animales as animales
 
 
@@ -49,8 +50,8 @@ class Mapa():
         f : [int]
             Numero de filas de la matriz
         '''
-        self.tam_mapa = (c, f)
-        for i_c in range(c):
+        self.tam_mapa = (c-1, f-1)
+        for i_c in range(0,c):
             self.matriz_mapa.append([])
             for i_f in range(f):
                 self.matriz_mapa[i_c].append(Casilla(None, i_c, i_f))
@@ -59,7 +60,13 @@ class Mapa():
         return self.tam_mapa
 
     def get_animal(self, posicion: tuple):
+        print('posicion'+str(posicion))
+        print('tamaño'+str(self.tam_mapa))
+
         return self.matriz_mapa[posicion[0]][posicion[1]].get_animal()
+
+    def casilla_es_vacia(self, posicion: tuple):
+        return self.get_animal(posicion) == None
 
     def set_animal(self, posicion: tuple, animal):
         self.matriz_mapa[posicion[0]][posicion[1]] = animal
@@ -80,7 +87,7 @@ class Mapa():
             ('--------------------------------------SIMULACION---------------------------------------------------')]
         for e_c in self.matriz_mapa:
             for e_f in e_c:
-                string += ['['+e_f.get_animal.__str__+']']
+                string += ['['+str(e_f.get_animal())+']']
                 string += ['\n']
         string += [('--------------------------------------SIMULACION---------------------------------------------------')]
 
@@ -93,8 +100,8 @@ class Simulacion():
         self.mapa = Mapa(n_columnas, n_filas)
         self.n_animales = n_animales
         self.n_manadas_total = n_manadas
-        self.n_hienas = 1/3*n_animales
-        self.n_leones = 1/6*self.n_hienas
+        self.n_hienas = int(1/3*n_animales)
+        self.n_leones = int(1/6*self.n_hienas)
         self.n_cebras = n_animales-self.n_leones-self.n_hienas
         aux = rdm.randint(1, n_manadas-1)
         self.n_manadas_leones = aux
@@ -108,7 +115,11 @@ class Simulacion():
             self.n_cebras, self.n_manadas_cebra, 'C')
         self.colocar_animales(
             self.dic_cebras, self.dic_hienas, self.dic_leones)
-        
+
+    def run(self):
+        '''Por el momento solo imprime el tablero actual, faltan cosas por crear
+        '''
+        print(self.__str__)
 
     def get_mapa(self):
         return self.mapa
@@ -138,11 +149,12 @@ class Simulacion():
             lista_animales = []
             while n_animal_copia > 1 and animales_por_manada > 0:
                 lista_animales.append(self.generar_animal(tipo, manada))
-                animales_por_manada = animales_por_manada-1
+                animales_por_manada -= -1
                 dic_animal[manada] = lista_animales
         lista_animales = []
-        for _ in n_animal_copia:
-            lista_animales.append(self.generar_animal(tipo, manada))
+        for _ in range(n_animal_copia):
+            lista_animales.append(
+                self.generar_animal(tipo, n_manadas_animal-1))
         dic_animal[n_manadas_animal] = lista_animales
         return dic_animal
 
@@ -168,30 +180,69 @@ class Simulacion():
         return animales.Cebra(self, tipo, None, manada)
 
     def colocar_animales(self, dic_cebras, dic_hienas, dic_leones):
-        long_mapa=self.mapa.get_tammapa()
-        lista_cebras=dic_cebras[1]
-        cont_cebras=len(lista_cebras)-1
-        cuad_cebra=cont_cebras/2
-        #Comocamos las cebras en el tablero
-        for c in range(cuad_cebra):
-            for f in range(cuad_cebra):
-                self.mapa.set_animal((c,f),lista_cebras[cont_cebras])
-                cont_cebras=cont_cebras-1
-        #Colocamos al resto de animales en el tablero
-        for manada, hienas in dic_hienas:
-            tope_hienas=len(hienas)-1
-            cont_hienas=tope_hienas
-            pos_inic=get_pos_valida(tope_hienas)
-            for c in range(pos_inic[0],pos_inic[0]+tope_hienas):
-                for f in range(pos_inic[1],pos_inic[1]+tope_hienas):
-                    self.mapa.set_animal((c,f),hienas[cont_hienas])
-                    cont_hienas=cont_hienas-1
-                    
-        #Abstraer metodo para colocar cada uno de los tipoos de animales. Simplificar codigo
-                
-        
-    def get_pos_valida(self, lista_animales):
-        pass
+        '''
+        Coloca los animales de manera aleatoria en el mapa.
+
+        Parameters
+        ----------
+        dic_cebras : [Dict]
+            [description]
+        dic_hienas : [Dict]
+            [description]
+        dic_leones : [Dict]
+            [description]
+        '''
+
+        self.colocar_manadas(dic_cebras)
+        self.colocar_manadas(dic_hienas)
+        self.colocar_manadas(dic_leones)
+
+    def colocar_manadas(self, dic_animales: dict):
+        '''
+        Dado un diccionario con todos los animales coloca cada una de las manadas en un punto aleatorio formando un cuadrado 
+
+        Parameters
+        ----------
+        dic_animales : dict
+            [description]
+        '''
+
+        for manada, animales in dic_animales.items():
+            tope_lista = len(animales)-1
+            tope_cuadricula=int(tope_lista/2)
+            pos_inic = self.get_pos__ini_valida(tope_lista)
+            c = pos_inic[0]
+            f = pos_inic[1]
+            for a in animales:
+                self.mapa.set_animal((c, f), a)
+                c += 1
+                if(c % tope_cuadricula==0):
+                    f += 1
+
+    def get_pos__ini_valida(self, long_lista_animales):
+        max_leng = self.mapa.get_tammapa()
+        reintentar = True
+        while (reintentar == True):
+            posicion = (rdm.randint(0, long_lista_animales),
+                        rdm.randint(0, long_lista_animales))
+            if not(posicion[0] >= max_leng[0] and posicion[1] >= max_leng[1]):
+                if self.mapa.casilla_es_vacia(posicion):
+                    c = posicion[0]
+                    top_c = c+long_lista_animales
+                    f = posicion[1]
+                    vacia = True
+                    while(c != top_c) and (vacia):
+                        if not(self.mapa.casilla_es_vacia((c, f))):
+                            vacia = False
+                        c += 1
+                if vacia is True:
+                    reintentar = False
+        return posicion
+
+    def __str__(self):
+        return str(self.mapa)+'\n'+'Numero de manadas activas: ' + self.n_manadas_total + '\n' + 'Manadas de Leones: '+n_manadas_leones+'Numero de Leones: ' + self.n_leones +\
+            + 'Manadas de Hienas: '+self.n_manadas_hienas+'Numero de Hienas: ' + self.n_hienas + \
+            'Manadas de Cebras: '+self.n_manadas_hienas+'Numero de cebras: ' + self.n_hienas
 
 
 # Una vez acabe el juego se hace un join de todos los hilos del juego y se cierra
