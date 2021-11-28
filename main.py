@@ -57,17 +57,17 @@ print('\t\t3) Salir')
 print('\n')
 opcion = input('--Porfavor introduzca una opcion--::')
 
-if opcion is'1':
+if opcion=='1':
     juego = simul.Simulacion()
     juego.run()
-if opcion is '2':
+if opcion == '2':
     n_columnas = input('--Porfavor introduzca el numero de columnas--::')
     n_filas = input('--Porfavor introduzca el numero de filas--::')
     n_animales = input('--Porfavor introduzca el numero de animales --::')
     n_manadas = input('--Porfavor introduzca  el numero de manadas--::')
     juego = simul.Simulacion(n_columnas, n_filas, n_animales, n_manadas)
     juego.run()
-if opcion is '3':
+if opcion== '3':
     quit()
     
 print(opcion)
