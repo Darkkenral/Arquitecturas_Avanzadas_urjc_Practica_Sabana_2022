@@ -38,6 +38,8 @@ class Casilla():
         return self.mutex
 
     def __str__(self):
+        if  self.animal is None:
+            return '     '
         return self.animal.__str__()
 
 
@@ -92,7 +94,7 @@ class Mapa():
             aux = []
             for e_f in range(self.tam_mapa[1]):
                 aux += ['['+str(self.matriz_mapa[e_c]
-                                [e_f].get_animal())+']']
+                                [e_f])+']']
             aux += ['\n']
             string += ' '.join(aux)
         string += ['\n']
@@ -185,10 +187,10 @@ class Simulacion():
             [Objeto del animal correspondiente]
         '''
         if(tipo == 'L'):
-            return animales.Leon(self, tipo, None, manada)
+            return animales.Leon(self,None, manada)
         if(tipo == 'H'):
-            return animales.Leon(self, tipo, None, manada)
-        return animales.Cebra(self, tipo, None, manada)
+            return animales.Hiena(self,None, manada)
+        return animales.Cebra(self, None, manada)
 
     def colocar_animales(self, dic_cebras, dic_hienas, dic_leones):
         '''
@@ -227,6 +229,7 @@ class Simulacion():
             pos_inic = self.get_pos__ini_valida(tope_lista)
             print(tope_lista)
             print(tope_cuadricula)
+            print(pos_inic)
             c = pos_inic[0]
             f = pos_inic[1]
             for a in animales:
@@ -249,7 +252,7 @@ class Simulacion():
                 if long_lista_animales==1:
                     return posicion
                 c = posicion[0]
-                top_c = c + int(long_lista_animales/2)
+                top_c = c + int(long_lista_animales-1/2)
                 f = posicion[1]
                 if (top_c <= max_leng[0]-1):
                     vacia = True
@@ -260,7 +263,6 @@ class Simulacion():
                             vacia=False
                         c += 1
                         if((c % top_c) == 0):
-                            
                             f += 1
                     if vacia is True:
                         return posicion

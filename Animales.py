@@ -36,6 +36,7 @@ class Animal(threading.Thread):
         manada : [type]
             [description]
         '''
+        super().__init__()
         self.id = next(self.id_animal)
         self.sabana = sabana
         self.tipo = Tipo(tipo)
@@ -61,12 +62,21 @@ class Animal(threading.Thread):
 
 
 class Cebra(Animal):
-    pass
-
+    def __init__(self, sabana: simulacion, posicion: tuple, manada):
+        super().__init__(sabana, 'C', posicion, manada)
+    def __str__(self):
+        return 'Cebra'
 
 class Leon(Animal):
-    pass
+    def __init__(self, sabana: simulacion, posicion: tuple, manada):
+        super().__init__(sabana, 'L', posicion, manada)
+        
+    def __str__(self):
+            return 'Leon '
 
 
 class Hiena(Animal):
-    pass
+    def __init__(self, sabana: simulacion, posicion: tuple, manada):
+        super().__init__(sabana, 'H', posicion, manada)
+    def __str__(self):
+            return 'Hiena'
