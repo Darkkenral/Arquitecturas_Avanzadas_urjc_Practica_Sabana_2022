@@ -1,6 +1,7 @@
 import random as rdm
 import threading
 import time
+import os
 
 import Animales as animales
 
@@ -30,6 +31,7 @@ class Casilla():
         return self.posicion
 
     def set_animal(self, animal):
+        
         self.animal = animal
 
     def get_mutex(self):
@@ -69,7 +71,6 @@ class Mapa():
         return self.get_animal(posicion) == None
 
     def set_animal(self, posicion: tuple, animal):
- 
         self.matriz_mapa[posicion[0]][posicion[1]].set_animal(animal)
 
     def delete_animal(self, posicion: tuple):
@@ -102,13 +103,13 @@ class Mapa():
 
 class Simulacion():
 
-    def __init__(self, n_columnas=75, n_filas=75, n_animales=100, n_manadas=2):
+    def __init__(self, n_columnas=20, n_filas=20, n_animales=20, n_manadas=2):
         self.mapa = Mapa(n_columnas, n_filas)
         self.n_animales = n_animales
         self.n_manadas_total = n_manadas
-        self.n_hienas = int(1/3*n_animales)
-        self.n_leones = int(1/6*self.n_hienas)
-        self.n_cebras = n_animales-self.n_leones-self.n_hienas
+        self.n_hienas = int(n_animales/3)
+        self.n_leones = int(self.n_hienas/6)
+        self.n_cebras = self.n_animales-(self.n_leones+self.n_hienas)
         aux = rdm.randint(1, n_manadas-1)
         self.n_manadas_leones = aux
         self.n_manadas_hienas = n_manadas - aux
@@ -125,8 +126,12 @@ class Simulacion():
     def run(self):
         '''Por el momento solo imprime el tablero actual, faltan cosas por crear
         '''
-        print(self.__str__)
+        while True:
+            self.clear()
+            print (self)
+            time.sleep(1)
 
+    
     def get_mapa(self):
         return self.mapa
 
@@ -155,7 +160,7 @@ class Simulacion():
             lista_animales = []
             while n_animal_copia > 1 and animales_por_manada > 0:
                 lista_animales.append(self.generar_animal(tipo, manada))
-                animales_por_manada -= -1
+                animales_por_manada -= 1
                 dic_animal[manada] = lista_animales
         lista_animales = []
         for _ in range(n_animal_copia):
@@ -214,51 +219,63 @@ class Simulacion():
         '''
 
         for manada, animales in dic_animales.items():
-            tope_lista = len(animales)-1
-            tope_cuadricula = int(tope_lista/2)
+            tope_lista = len(animales)
+            if tope_lista !=1:
+                tope_cuadricula = int(tope_lista/2)
+            else:
+                tope_cuadricula = tope_lista
             pos_inic = self.get_pos__ini_valida(tope_lista)
-            print('help'+ str(pos_inic))
+            print(tope_lista)
+            print(tope_cuadricula)
             c = pos_inic[0]
             f = pos_inic[1]
-            print(self.mapa)
             for a in animales:
                 self.mapa.set_animal((c, f), a)
                 c += 1
                 if((c % tope_cuadricula) == 0):
+                    c = pos_inic[0]
                     f += 1
-        
+           
+
 
     def get_pos__ini_valida(self, long_lista_animales):
         max_leng = self.mapa.get_tammapa()
         reintentar = True
         vacia = True
-        while (reintentar == True):
-            posicion = (rdm.randint(0, max_leng[0]),
-                        rdm.randint(0, max_leng[1]))
+        while (reintentar):
+            posicion = (rdm.randint(0, max_leng[0]-1),
+                        rdm.randint(0, max_leng[1]-1))
             if self.mapa.casilla_es_vacia(posicion):
+                if long_lista_animales==1:
+                    return posicion
                 c = posicion[0]
-                top_c = c + int(long_lista_animales)/2
+                top_c = c + int(long_lista_animales/2)
                 f = posicion[1]
-
                 if (top_c <= max_leng[0]-1):
                     vacia = True
                     while(c <= top_c) and (vacia):
-                        if ((not(self.mapa.casilla_es_vacia((c, f)))) or (f >= (max_leng[1]))):
+                        if not self.mapa.casilla_es_vacia((c, f)):
                             vacia = False
+                        if (f >= max_leng[1]-1):
+                            vacia=False
                         c += 1
                         if((c % top_c) == 0):
+                            
                             f += 1
                     if vacia is True:
-                        reintentar = False
-               
-        print('posicion'+str(posicion))
-        print('tamaño'+str(self.mapa.get_tammapa()))
+                        return posicion
         return posicion
 
     def __str__(self):
-        return str(self.mapa)+'\n'+'Numero de manadas activas: ' + self.n_manadas_total + '\n' + 'Manadas de Leones: '+self.n_manadas_leones+'Numero de Leones: ' + self.n_leones +\
-             'Manadas de Hienas: '+self.n_manadas_hienas+'Numero de Hienas: ' + self.n_hienas + \
-            'Manadas de Cebras: '+self.n_manadas_hienas+'Numero de cebras: ' + self.n_hienas
+        return str(self.mapa)+'\n'+' Numero de manadas activas: ' + str(self.n_manadas_total) + '\n' + ' Manadas de Leones: '+ str(self.n_manadas_leones)+' Numero de Leones: ' +  str(self.n_leones) +\
+             ' Manadas de Hienas: '+ str(self.n_manadas_hienas)+' Numero de Hienas: ' +  str(self.n_hienas) + \
+            ' Manadas de Cebras: '+ str(self.n_manadas_hienas)+' Numero de cebras: ' +  str(self.n_cebras)
+    
+    def clear(self):
+        if os.name == "nt":
+            os.system("cls")
+        else:
+            os.system("clear")
 
 
 # Una vez acabe el juego se hace un join de todos los hilos del juego y se cierra

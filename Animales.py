@@ -36,6 +36,7 @@ class Animal(threading.Thread):
         manada : [type]
             [description]
         '''
+        self.id = next(self.id_animal)
         self.sabana = sabana
         self.tipo = Tipo(tipo)
         self.posicion = posicion
