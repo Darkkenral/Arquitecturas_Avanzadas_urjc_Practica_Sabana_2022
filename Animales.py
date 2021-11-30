@@ -1,3 +1,4 @@
+from random import random
 import threading
 import itertools
 import time
@@ -16,11 +17,8 @@ class Animal(threading.Thread):
     Clase animales, hereda de threads y es la clase padre de todos los animales del juego 
 
     '''
-    id_animal = itertools.count()
-    vector_movimiento = [(-1, 1), (0, 1), (1, 1), (1, 0),
-                         (1, -1), (0, -1), (-1, -1)]
 
-    def __init__(self, sabana: simulacion, tipo, posicion: tuple, manada):
+    def __init__(self, id, sabana: simulacion, tipo, posicion: tuple, manada):
         '''[summary]
 
         Parameters
@@ -36,8 +34,10 @@ class Animal(threading.Thread):
         manada : [type]
             [description]
         '''
+        self.vector_movimiento = [
+            (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
         super().__init__()
-        self.id = next(self.id_animal)
+        self.id = id
         self.sabana = sabana
         self.tipo = Tipo(tipo)
         self.posicion = posicion
@@ -48,10 +48,43 @@ class Animal(threading.Thread):
         return(tp_origen[0]+tp_movimiento[0], tp_origen[1]+tp_movimiento[1])
 
     def movimiento(self):
-        self.sabana
+        self.bloquear_casilla(self.posicion)
+        list_posiciones_validas = self.get_posiciones_validas(self.posicion)
+        long_list = len(list_posiciones_validas)
+        if(long_list != 0):
+            index = random(0, long_list-1)
+            destino = list_posiciones_validas[index]
+            list_posiciones_validas.remove(destino)
+            for e in list_posiciones_validas:
+                self.desbloquear_casilla(e)
+            self.sabana.get_mapa().get_casilla(self.posicion).set_animal(None)
+            self.desbloquear_casilla(self.posicion)
+            self.sabana.get_mapa().get_casilla(destino).set_animal(self)
+            self.posicion = destino
+            self.desbloquear_casilla(destino)
 
     def __str__(self):
-        return str(self.tipo.value)+'(ID:'+str(self.id_animal) + ')'+' (M:' + str(self.manada)+')'
+        return str(self.tipo.value)+str(self.manada)+'-'+str(self.id)
+
+    def get_posiciones_validas(self,posicion: tuple):
+        pos_validas=[]
+        for movimiento in self.vector_movimiento:
+            destino=self.sumatuplas(posicion,movimiento)
+            if not(self.esta_bloqueada(destino)) or not(self.esta_ocupada(destino)):
+                pass
+            
+
+    def esta_ocupada(self,posicion:tuple):
+        
+    
+    def blockear_casilla(self, posicion: tuple):
+        self.sabana.get_mapa().get_casilla(posicion).bloquear()
+
+    def desbloquear_casilla(self, posicion: tuple):
+        self.sabana.get_mapa().get_casilla(posicion).desbloquear()
+
+    def esta_bloqueada(self, posicion: tuple):
+        return self.sabana.get_mapa().get_casilla(posicion).es_bloqueada()
 
     # SI CAZO BLOQUEO TODO, LUEGO ELIJO LAS POTENCIALES PRESAS, SUELTO LO QUE NO USO, ME DESPLAZO Y LIBERO LOS MUTEX
     # EN EL MOVIMIENTO HAGO MUTEX EN TODO Y ME MUEVO
@@ -62,21 +95,32 @@ class Animal(threading.Thread):
 
 
 class Cebra(Animal):
-    def __init__(self, sabana: simulacion, posicion: tuple, manada):
-        super().__init__(sabana, 'C', posicion, manada)
+    def __init__(self, id, sabana: simulacion, posicion: tuple, manada):
+        super().__init__(id, sabana, 'C', posicion, manada)
+
     def __str__(self):
-        return 'Cebra'
+        return 'Cebra'+' '+str(self.manada)
+
+
+class Carnivoro(Animal):
+    def __init__(self, id, sabana: simulacion, tipo, posicion: tuple, manada):
+        super().__init__(id, sabana, tipo, posicion, manada)
+
+    def Cazar(self):
+        pass
+
 
 class Leon(Animal):
-    def __init__(self, sabana: simulacion, posicion: tuple, manada):
-        super().__init__(sabana, 'L', posicion, manada)
-        
+    def __init__(self, id, sabana: simulacion, posicion: tuple, manada):
+        super().__init__(id, sabana, 'L', posicion, manada)
+
     def __str__(self):
-            return 'Leon '
+        return 'Leon '+str(self.manada)
 
 
 class Hiena(Animal):
-    def __init__(self, sabana: simulacion, posicion: tuple, manada):
-        super().__init__(sabana, 'H', posicion, manada)
+    def __init__(self, id, sabana: simulacion, posicion: tuple, manada):
+        super().__init__(id, sabana, 'H', posicion, manada)
+
     def __str__(self):
-            return 'Hiena'
+        return 'Hiena'+' '+str(self.manada)

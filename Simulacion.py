@@ -1,5 +1,6 @@
 import random as rdm
 import threading
+import itertools
 import time
 import os
 
@@ -29,7 +30,12 @@ class Casilla():
 
     def get_position(self):
         return self.posicion
-
+    def bloquear(self):
+        return  self.mutex.acquire()
+    def desbloquear(self):
+        return self.mutex.release()
+    def es_bloqueada(self):
+        return self.mutex.locked()
     def set_animal(self, animal):
         
         self.animal = animal
@@ -65,9 +71,10 @@ class Mapa():
 
     def get_tammapa(self):
         return self.tam_mapa
-
+    def get_casilla(self, posicion: tuple):
+        return self.matriz_mapa[posicion[0]][posicion[1]]
     def get_animal(self, posicion: tuple):
-        return self.matriz_mapa[posicion[0]][posicion[1]].get_animal()
+        return self.get_casilla(posicion).get_animal()
 
     def casilla_es_vacia(self, posicion: tuple):
         return self.get_animal(posicion) == None
@@ -108,6 +115,7 @@ class Simulacion():
     def __init__(self, n_columnas=20, n_filas=20, n_animales=20, n_manadas=2):
         self.mapa = Mapa(n_columnas, n_filas)
         self.n_animales = n_animales
+        self.ids_animal = itertools.count(0)
         self.n_manadas_total = n_manadas
         self.n_hienas = int(n_animales/3)
         self.n_leones = int(self.n_hienas/6)
@@ -156,7 +164,7 @@ class Simulacion():
         '''
         dic_animal = {}
         n_animal_copia = n_animal
-        for manada in range(n_manadas_animal-1):
+        for manada in range(0,n_manadas_animal-1):
             animales_por_manada = rdm.randint(1, n_animal_copia)
             n_animal_copia = n_animal_copia-animales_por_manada
             lista_animales = []
@@ -186,11 +194,12 @@ class Simulacion():
         [Animal]
             [Objeto del animal correspondiente]
         '''
+        id = next(self.ids_animal)
         if(tipo == 'L'):
-            return animales.Leon(self,None, manada)
+            return animales.Leon(id,self,None, manada)
         if(tipo == 'H'):
-            return animales.Hiena(self,None, manada)
-        return animales.Cebra(self, None, manada)
+            return animales.Hiena(id,self,None, manada)
+        return animales.Cebra(id,self, None, manada)
 
     def colocar_animales(self, dic_cebras, dic_hienas, dic_leones):
         '''
