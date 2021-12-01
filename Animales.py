@@ -70,12 +70,12 @@ class Animal(threading.Thread):
         pos_validas=[]
         for movimiento in self.vector_movimiento:
             destino=self.sumatuplas(posicion,movimiento)
-            if not(self.esta_bloqueada(destino)) or not(self.esta_ocupada(destino)):
-                pass
-            
+            if not(self.esta_bloqueada(destino)) and not(self.esta_ocupada(destino)):
+                pos_validas.append(destino)
+        return pos_validas
 
     def esta_ocupada(self,posicion:tuple):
-        
+        return self.sabana.get_mapa().get_casilla(posicion).get_animal()is not None
     
     def blockear_casilla(self, posicion: tuple):
         self.sabana.get_mapa().get_casilla(posicion).bloquear()
@@ -97,6 +97,12 @@ class Animal(threading.Thread):
 class Cebra(Animal):
     def __init__(self, id, sabana: simulacion, posicion: tuple, manada):
         super().__init__(id, sabana, 'C', posicion, manada)
+
+    def run(self):
+        while True:
+            self.movimiento()
+
+            time.sleep(1)
 
     def __str__(self):
         return 'Cebra'+' '+str(self.manada)

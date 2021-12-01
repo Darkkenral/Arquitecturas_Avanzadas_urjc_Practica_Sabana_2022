@@ -132,16 +132,32 @@ class Simulacion():
             self.n_cebras, self.n_manadas_cebra, 'C')
         self.colocar_animales(
             self.dic_cebras, self.dic_hienas, self.dic_leones)
+        
+        
+        
+    def inicialzar_threads(self):
+        self.inicializar_diccionario(self.dic_cebras)
+
+    
+    def inicializar_diccionario(self,dic_canimal:dict):
+        for manada ,animales in dic_canimal.items():
+              for animal in animales:
+                  print(animal)
+                  animal.start()
+                  animal.join()
 
     def run(self):
         '''Por el momento solo imprime el tablero actual, faltan cosas por crear
         '''
+        self.inicialzar_threads()
+        #aqui iria la variable ganador 
         while True:
             self.clear()
             print (self)
             time.sleep(1)
 
-    
+
+            
     def get_mapa(self):
         return self.mapa
 
