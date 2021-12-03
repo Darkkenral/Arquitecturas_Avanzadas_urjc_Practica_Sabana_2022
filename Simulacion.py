@@ -122,7 +122,24 @@ class Manada():
         self.id = id
         self.contador_ = itertools.count(0)
         self.mutex = threading.Lock()
-
+        
+        
+        
+        
+class Ganador():
+    def __init__(self):
+        self.nombre = ""
+        self.victoria=False       
+        self.mutex = threading.Lock()
+    def bloquear(self):
+        self.mutex.acquire()
+    def desbloquear(self):
+        self.mutex.release()
+    def esta_bloqueado(self):
+        return self.mutex.locked()
+    def get_victoria(self):
+        return self.victoria
+        
 
 class Simulacion():
 
@@ -138,6 +155,7 @@ class Simulacion():
         self.n_manadas_leones = aux
         self.n_manadas_hienas = n_manadas - aux
         self.n_manadas_cebra = 1
+        self.ganador= Ganador()
         self.dic_leones = self.generar_diccionario(
             self.n_leones, self.n_manadas_leones, 'L')
         self.dic_hienas = self. generar_diccionario(
@@ -244,6 +262,7 @@ class Simulacion():
         self.colocar_manadas(dic_cebras)
         self.colocar_manadas(dic_hienas)
         self.colocar_manadas(dic_leones)
+
 
     def colocar_manadas(self, dic_animales: dict):
         '''

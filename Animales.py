@@ -53,7 +53,7 @@ class Animal(threading.Thread):
         # se bloquean dentro
         list_posiciones_validas = self.get_posiciones_validas(self.posicion)
         long_list = len(list_posiciones_validas)
-        if(long_list != 0):
+        if list_posiciones_validas:
             index = rdm.randint(0, long_list-1)
             destino = list_posiciones_validas[index]
             list_posiciones_validas.remove(destino)
@@ -73,12 +73,12 @@ class Animal(threading.Thread):
         pos_validas = []
         for movimiento in self.vector_movimiento:
             destino = self.sumatuplas(posicion, movimiento)
-            if not(self.esta_bloqueada(destino)) and not(self.esta_ocupada(destino) and not(self.en_rango(destino))):
+            if ((not self.esta_bloqueada(destino)) and self.esta_vacia(destino) and self.en_rango(destino)):
                 pos_validas.append(destino)
                 self.bloquear_casilla(destino)
         return pos_validas
 
-    def esta_ocupada(self, posicion: tuple):
+    def esta_vacia(self, posicion: tuple):
         animal = self.sabana.get_mapa().get_animal(posicion)
         if animal is None:
             return True
@@ -95,6 +95,9 @@ class Animal(threading.Thread):
         if(posicion[0] < leng[0]) and (posicion[1] < leng[1]):
             return True
         return False
+    
+    def hay_ganador(self):
+        return self.sabana.ganador.get_victoria()==True
 
     def set_posicion(self, posicion: tuple):
         self.posicion = posicion
@@ -115,7 +118,7 @@ class Cebra(Animal):
         super().__init__(id, sabana, 'C', posicion, manada)
 
     def run(self):
-        while True:
+        while not self.hay_ganador():
             self.movimiento()
             time.sleep(1)
 
