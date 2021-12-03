@@ -1,4 +1,5 @@
-from random import random
+
+import random as rdm
 import threading
 import itertools
 import time
@@ -49,14 +50,16 @@ class Animal(threading.Thread):
 
     def movimiento(self):
         self.bloquear_casilla(self.posicion)
+        # se bloquean dentro
         list_posiciones_validas = self.get_posiciones_validas(self.posicion)
         long_list = len(list_posiciones_validas)
         if(long_list != 0):
-            index = random(0, long_list-1)
+            index = rdm.randint(0, long_list-1)
             destino = list_posiciones_validas[index]
             list_posiciones_validas.remove(destino)
             for e in list_posiciones_validas:
                 self.desbloquear_casilla(e)
+            # El lio esta  aqui hay que bloquear bien las casillas cuando voy a mirar si son validas
             self.sabana.get_mapa().get_casilla(self.posicion).set_animal(None)
             self.desbloquear_casilla(self.posicion)
             self.sabana.get_mapa().get_casilla(destino).set_animal(self)
@@ -64,24 +67,37 @@ class Animal(threading.Thread):
             self.desbloquear_casilla(destino)
 
     def __str__(self):
-        return str(self.tipo.value)+str(self.manada)+'-'+str(self.id)
+        return str(self.tipo.value)+str(self.manada.id)+'-'+str(self.id)
 
-    def get_posiciones_validas(self,posicion: tuple):
-        pos_validas=[]
+    def get_posiciones_validas(self, posicion: tuple):
+        pos_validas = []
         for movimiento in self.vector_movimiento:
-            destino=self.sumatuplas(posicion,movimiento)
-            if not(self.esta_bloqueada(destino)) and not(self.esta_ocupada(destino)):
+            destino = self.sumatuplas(posicion, movimiento)
+            if not(self.esta_bloqueada(destino)) and not(self.esta_ocupada(destino) and not(self.en_rango(destino))):
                 pos_validas.append(destino)
+                self.bloquear_casilla(destino)
         return pos_validas
 
-    def esta_ocupada(self,posicion:tuple):
-        return self.sabana.get_mapa().get_casilla(posicion).get_animal()is not None
-    
-    def blockear_casilla(self, posicion: tuple):
+    def esta_ocupada(self, posicion: tuple):
+        animal = self.sabana.get_mapa().get_animal(posicion)
+        if animal is None:
+            return True
+        return False
+
+    def bloquear_casilla(self, posicion: tuple):
         self.sabana.get_mapa().get_casilla(posicion).bloquear()
 
     def desbloquear_casilla(self, posicion: tuple):
         self.sabana.get_mapa().get_casilla(posicion).desbloquear()
+
+    def en_rango(self, posicion: tuple):
+        leng = self.sabana.get_mapa().get_tammapa()
+        if(posicion[0] < leng[0]) and (posicion[1] < leng[1]):
+            return True
+        return False
+
+    def set_posicion(self, posicion: tuple):
+        self.posicion = posicion
 
     def esta_bloqueada(self, posicion: tuple):
         return self.sabana.get_mapa().get_casilla(posicion).es_bloqueada()
@@ -101,11 +117,10 @@ class Cebra(Animal):
     def run(self):
         while True:
             self.movimiento()
-
             time.sleep(1)
 
     def __str__(self):
-        return 'Cebra'+' '+str(self.manada)
+        return 'Cebra'+' '+str(self.id)+'-'+str(self.manada.id)
 
 
 class Carnivoro(Animal):
@@ -121,7 +136,7 @@ class Leon(Animal):
         super().__init__(id, sabana, 'L', posicion, manada)
 
     def __str__(self):
-        return 'Leon '+str(self.manada)
+        return 'Leon '+str(self.id)+'-'+str(self.manada.id)
 
 
 class Hiena(Animal):
@@ -129,4 +144,4 @@ class Hiena(Animal):
         super().__init__(id, sabana, 'H', posicion, manada)
 
     def __str__(self):
-        return 'Hiena'+' '+str(self.manada)
+        return 'Hiena'+' '+str(self.id)+'-'+str(self.manada.id)

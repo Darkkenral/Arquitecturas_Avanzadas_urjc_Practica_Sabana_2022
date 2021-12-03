@@ -57,7 +57,7 @@ print('\t\t3) Salir')
 print('\n')
 opcion = input('--Porfavor introduzca una opcion--::')
 
-if opcion=='1':
+if opcion == '1':
     juego = simul.Simulacion()
     juego.run()
 if opcion == '2':
@@ -67,9 +67,9 @@ if opcion == '2':
     n_manadas = input('--Porfavor introduzca  el numero de manadas--::')
     juego = simul.Simulacion(n_columnas, n_filas, n_animales, n_manadas)
     juego.run()
-if opcion== '3':
+if opcion == '3':
     quit()
-    
+
 print(opcion)
 print('------SIMULACION TERMINADA------')
 input('--Porfavor presione enter para terminar-::')
