@@ -273,49 +273,22 @@ class Simulacion():
         dic_animales : dict
             [description]
         '''
+        vector_movimiento = [
+            (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
 
         for manada, animales in dic_animales.items():
-            tope_lista = len(animales)
-            if tope_lista != 1:
-                tope_cuadricula = int(tope_lista/2)
-            else:
-                tope_cuadricula = tope_lista
-            pos_inic = self.get_pos__ini_valida(tope_lista)
-            c = pos_inic[0]
-            f = pos_inic[1]
-            for a in animales:
-                self.mapa.set_animal((c, f), a)
-                a.set_posicion((c, f))
-                c += 1
-                if((c % tope_cuadricula) == 0):
-                    c = pos_inic[0]
-                    f += 1
+            long_list= len(animales)
+            posicion=self.get_pos__ini_valida()
+            
 
-    def get_pos__ini_valida(self, long_lista_animales):
-        max_leng = self.mapa.get_tammapa()
-        reintentar = True
-        vacia = True
-        while (reintentar):
-            posicion = (rdm.randint(0, max_leng[0]-1),
-                        rdm.randint(0, max_leng[1]-1))
-            if self.mapa.casilla_es_vacia(posicion):
-                if long_lista_animales == 1:
-                    return posicion
-                c = posicion[0]
-                top_c = c + int(long_lista_animales-1/2)
-                f = posicion[1]
-                if (top_c <= max_leng[0]-1):
-                    vacia = True
-                    while(c <= top_c) and (vacia):
-                        if not self.mapa.casilla_es_vacia((c, f)):
-                            vacia = False
-                        if (f >= max_leng[1]-1):
-                            vacia = False
-                        c += 1
-                        if((c % top_c) == 0):
-                            f += 1
-                    if vacia is True:
-                        return posicion
+    def get_pos__ini_valida(self):
+        tam_max=self.get_mapa.get_tammapa
+        encontrada=True
+        while encontrada:
+            posicion=(rdm.randint(0,tam_max[0]),rdm.randint(0,tam_max[1]))  
+            if self.get_mapa.get_animal(posicion) is None:
+                encontrada=False
+
         return posicion
 
     def print_table(self):
