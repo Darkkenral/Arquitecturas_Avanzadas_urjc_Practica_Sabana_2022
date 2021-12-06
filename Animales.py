@@ -15,7 +15,7 @@ class Tipo(Enum):
 
 class Animal(threading.Thread):
     '''
-    Clase animales, hereda de threads y es la clase padre de todos los animales del juego 
+    Clase animales, hereda de threads y es la clase padre de todos los animales del juego
 
     '''
 
@@ -50,7 +50,6 @@ class Animal(threading.Thread):
 
     def movimiento(self):
         self.bloquear_casilla(self.posicion)
-        # se bloquean dentro
         list_posiciones_validas = self.get_posiciones_validas(self.posicion)
         long_list = len(list_posiciones_validas)
         if list_posiciones_validas:
@@ -59,7 +58,6 @@ class Animal(threading.Thread):
             list_posiciones_validas.remove(destino)
             for e in list_posiciones_validas:
                 self.desbloquear_casilla(e)
-            # El lio esta  aqui hay que bloquear bien las casillas cuando voy a mirar si son validas
             self.sabana.get_mapa().get_casilla(self.posicion).set_animal(None)
             self.desbloquear_casilla(self.posicion)
             self.sabana.get_mapa().get_casilla(destino).set_animal(self)
@@ -95,9 +93,9 @@ class Animal(threading.Thread):
         if(posicion[0] < leng[0]) and (posicion[1] < leng[1]):
             return True
         return False
-    
+
     def hay_ganador(self):
-        return self.sabana.ganador.get_victoria()==True
+        return self.sabana.ganador.get_victoria() == True
 
     def set_posicion(self, posicion: tuple):
         self.posicion = posicion
@@ -116,27 +114,26 @@ class Animal(threading.Thread):
 class Cebra(Animal):
     def __init__(self, id, sabana: simulacion, posicion: tuple, manada):
         super().__init__(id, sabana, 'C', posicion, manada)
+        self.velocidad = rdm.randint(7, 10)
 
     def run(self):
-        while not self.hay_ganador():
+        if self.posicion != None:
             self.movimiento()
-            time.sleep(1)
+            time.sleep(self.velocidad)
 
     def __str__(self):
         return 'Cebra'+' '+str(self.id)+'-'+str(self.manada.id)
 
 
-class Carnivoro(Animal):
-    def __init__(self, id, sabana: simulacion, tipo, posicion: tuple, manada):
-        super().__init__(id, sabana, tipo, posicion, manada)
-
-    def Cazar(self):
-        pass
-
-
 class Leon(Animal):
     def __init__(self, id, sabana: simulacion, posicion: tuple, manada):
         super().__init__(id, sabana, 'L', posicion, manada)
+        self.velocidad = rdm.randint(1, 3)
+
+    def run(self):
+        while not self.hay_ganador():
+            self.movimiento()
+            time.sleep(self.velocidad)
 
     def __str__(self):
         return 'Leon '+str(self.id)+'-'+str(self.manada.id)
@@ -145,6 +142,81 @@ class Leon(Animal):
 class Hiena(Animal):
     def __init__(self, id, sabana: simulacion, posicion: tuple, manada):
         super().__init__(id, sabana, 'H', posicion, manada)
+        self.velocidad = rdm.randint(4, 6)
+
+    def run(self):
+        while not self.hay_ganador():
+            if self.posicion != None:
+                self.cazar()
+                time.sleep(self.velocidad)
+
+    def cazar(self):
+        self.bloquear_casilla(self.posicion)
+        posb_movimientos = []
+        moverme = True
+        hay_hienas = False
+        hay_cebras = False
+
+        for movimiento in self.vector_movimiento:
+            destino = self.sumatuplas(self.posicion, movimiento)
+            if ((not self.esta_bloqueada(destino)) and self.en_rango(destino)):
+                self.bloquear_casilla(destino)
+                posb_movimientos.append(destino)
+        lista_cebras = []
+        lista_hienas = []
+        for casilla in posb_movimientos:
+            if not self.esta_vacia(casilla):
+                if self.get_tipo(casilla) == 'L':
+                    self.desbloquear_casilla(casilla)
+                    posb_movimientos.remove(casilla)
+                if self.get_tipo(casilla) == 'C':
+                    lista_cebras.append(casilla)
+                    hay_cebras = True
+                if self.get_tipo(casilla) == 'H':
+                    lista_hienas.append(casilla)
+                    hay_hienas = True
+        if hay_hienas and hay_cebras:
+            self.cazar_cebra(posb_movimientos, lista_hienas)
+        else:
+            for e in lista_hienas:
+                self.desbloquear_casilla(e)
+            for e in lista_cebras:
+                self.desbloquear_casilla(e)
+            for e in lista_hienas:
+                posb_movimientos.remove(e)
+            for e in lista_cebras:
+                posb_movimientos.remove(e)
+
+            if posb_movimientos != []:
+                index = rdm.randint(0, len(posb_movimientos)-1)
+                destino = posb_movimientos[index]
+                self.sabana.get_mapa().get_casilla(self.posicion).set_animal(None)
+                self.desbloquear_casilla(self.posicion)
+                self.sabana.get_mapa().get_casilla(destino).set_animal(self)
+                self.posicion = destino
+                self.desbloquear_casilla(destino)
+
+    def cazar_cebra(self, posb_movimientos: list, lista_hienas: list):
+        for hiena in lista_hienas:
+            posb_movimientos.remove(hiena)
+        for hiena in lista_hienas:
+            self.desbloquear_casilla(hiena)
+        index = rdm.randint(0, len(posb_movimientos)-1)
+        destino = posb_movimientos[index]
+        posb_movimientos.remove(destino)
+        for pos in posb_movimientos:
+            self.desbloquear_casilla(pos)
+        self.sabana.get_mapa().get_casilla(self.posicion).set_animal(None)
+        self.desbloquear_casilla(self.posicion)
+        self.sabana.get_mapa().get_casilla(destino).set_animal(self)
+        self.manada.incremento_contador()
+        if self.manada.get_contador() > 19:
+            self.sabana.ganador.set_ganador(self.__str__)
+        self.posicion = destino
+        self.desbloquear_casilla(destino)
 
     def __str__(self):
         return 'Hiena'+' '+str(self.id)+'-'+str(self.manada.id)
+
+    def get_tipo(self, posicion):
+        return self.sabana.get_mapa().get_casilla(posicion).get_animal().tipo.value
