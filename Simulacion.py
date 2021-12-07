@@ -404,7 +404,7 @@ class Simulacion():
 
     def print_table(self):
         while not self.ganador.get_victoria():
-            # self.clear()
+            self.clear()
             print(self)
             time.sleep(1)
 

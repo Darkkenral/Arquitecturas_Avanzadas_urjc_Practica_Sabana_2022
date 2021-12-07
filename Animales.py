@@ -127,7 +127,7 @@ class Cebra(Animal):
                 self.sabana.get_mapa().set_animal(posicion, nueva_cebra)
                 self.sabana.nuevas_threads.append(nueva_cebra)
                 self.desbloquear_casilla(posicion)
-                print(str(nueva_cebra)+str(nueva_cebra.posicion))
+
                 nueva_cebra.start()
                 condicion = False
             else:
@@ -154,11 +154,125 @@ class Leon(Animal):
 
     def run(self):
         while (self.hay_ganador() is False):
-            self.movimiento()
+            # self.movimiento()
+            self.cazar()
             time.sleep(self.velocidad)
+
+    def cazar(self):
+        self.bloquear_casilla(self.posicion)
+        posb_movimientos = []
+        lista_cebras = []
+        lista_hienas = []
+        lista_leones = []
+        for movimiento in self.vector_movimiento:
+            destino = self.sumatuplas(self.posicion, movimiento)
+            if (self.en_rango(destino) and (self.esta_bloqueada(destino) is False)):
+                self.bloquear_casilla(destino)
+                posb_movimientos.append(destino)
+                if not self.esta_vacia(destino):
+                    if self.get_tipo(destino) == 'L':
+                        lista_leones.append(destino)
+
+                    if self.get_tipo(destino) == 'C':
+                        lista_cebras.append(destino)
+
+                    if self.get_tipo(destino) == 'H':
+                        lista_hienas.append(destino)
+
+        if (len(lista_leones) >= len(lista_hienas)) and len(lista_hienas) > 0:
+            # liberar cebrasu casillas que no vaya a mirar
+            for cebra in lista_cebras:
+                posb_movimientos.remove(cebra)
+                self.desbloquear_casilla(cebra)
+            for leon in lista_leones:
+                posb_movimientos.remove(leon)
+            for hiena in lista_hienas:
+                posb_movimientos.remove(hiena)
+            for movimiento in posb_movimientos:
+                self.desbloquear_casilla(movimiento)
+            self.cazar_hiena(lista_leones, lista_hienas)
+
+        elif lista_cebras:
+            # liberar hienas  u casillas que no vaya a mirar
+            for cebra in lista_cebras:
+                posb_movimientos.remove(cebra)
+            for movimiento in posb_movimientos:
+                self.desbloquear_casilla(movimiento)
+            self.cazar_cebra(lista_cebras)
+        else:
+            for hiena in lista_hienas:
+                posb_movimientos.remove(hiena)
+                self.desbloquear_casilla(hiena)
+            if posb_movimientos != []:
+                index = rdm.randint(0, len(posb_movimientos)-1)
+                destino = posb_movimientos[index]
+                posb_movimientos.remove(destino)
+                for casilla in posb_movimientos:
+                    self.desbloquear_casilla(casilla)
+                pos_actual = self.posicion
+                self.sabana.get_mapa().get_casilla(pos_actual).set_animal(None)
+                self.desbloquear_casilla(pos_actual)
+                self.sabana.get_mapa().get_casilla(destino).set_animal(self)
+                self.posicion = destino
+                self.desbloquear_casilla(destino)
+
+    def cazar_hiena(self, lista_leones: list, lista_hienas: list):
+        if len(lista_hienas) > 1:
+            index = rdm.randint(0, len(lista_hienas)-1)
+        else:
+            index = 0
+        destino = lista_hienas[index]
+        lista_hienas.remove(destino)
+        for hiena in lista_hienas:
+            self.desbloquear_casilla(hiena)
+        for leone in lista_leones:
+            self.desbloquear_casilla(leone)
+        pos_actual = self.posicion
+        self.sabana.get_mapa().set_animal(pos_actual, None)
+        self.desbloquear_casilla(pos_actual)
+        animal = self.sabana.get_mapa().get_casilla(destino).get_animal()
+        animal.set_posicion(None)
+        print(str(animal)+"-Cazada")
+        self.sabana.get_mapa().set_animal(destino, None)
+        self.sabana.get_mapa().set_animal(destino, self)
+        self.manada.incremento_contador()
+        self.manada.incremento_contador()
+        if self.manada.get_contador() > 7:
+            self.sabana.ganador.set_ganador(
+                'Leon '+str(self.id)+'-'+str(self.manada.id))
+        self.posicion = destino
+        self.desbloquear_casilla(destino)
+
+    def cazar_cebra(self, lista_cebras: list):
+        if len(lista_cebras) > 1:
+            index = rdm.randint(0, len(lista_cebras)-1)
+        else:
+            index = 0
+        destino = lista_cebras[index]
+        lista_cebras.remove(destino)
+        for pos in lista_cebras:
+            self.desbloquear_casilla(pos)
+         # tenemos a la cebra
+        pos_actual = self.posicion
+        self.sabana.get_mapa().set_animal(pos_actual, None)
+        self.desbloquear_casilla(pos_actual)
+        animal = self.sabana.get_mapa().get_casilla(destino).get_animal()
+        animal.set_posicion(None)
+        print(str(animal)+"-Cazada")
+        self.sabana.get_mapa().set_animal(destino, None)
+        self.sabana.get_mapa().set_animal(destino, self)
+        self.manada.incremento_contador()
+        if self.manada.get_contador() > 19:
+            self.sabana.ganador.set_ganador(
+                'Leon '+str(self.id)+'-'+str(self.manada.id))
+        self.posicion = destino
+        self.desbloquear_casilla(destino)
 
     def __str__(self):
         return 'Leon '+str(self.id)+'-'+str(self.manada.id)
+
+    def get_tipo(self, posicion):
+        return self.sabana.get_mapa().get_casilla(posicion).get_animal().tipo.value
 
 
 class Hiena(Animal):
@@ -167,10 +281,12 @@ class Hiena(Animal):
         self.velocidad = rdm.randint(4, 6)
 
     def run(self):
-        while (self.hay_ganador() is False):
-            if self.posicion != None:
-                self.cazar()
-                time.sleep(self.velocidad)
+        condicion = True
+        while (self.hay_ganador() is False) and condicion:
+            if self.posicion is not None:
+                if self.esta_bloqueada(self.posicion) is False:
+                    self.cazar()
+                    time.sleep(self.velocidad)
 
     def cazar(self):
         self.bloquear_casilla(self.posicion)
