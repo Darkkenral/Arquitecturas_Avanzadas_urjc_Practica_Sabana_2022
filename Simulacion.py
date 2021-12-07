@@ -41,7 +41,6 @@ class Casilla():
         return self.mutex.locked()
 
     def set_animal(self, animal):
-
         self.animal = animal
 
     def get_mutex(self):
@@ -68,7 +67,7 @@ class Mapa():
             Numero de filas de la matriz
         '''
         self.tam_mapa = (c-1, f-1)
-        for i_c in range(0, c):
+        for i_c in range(c):
             self.matriz_mapa.append([])
             for i_f in range(f):
                 self.matriz_mapa[i_c].append(Casilla(None, i_c, i_f))
@@ -77,25 +76,16 @@ class Mapa():
         return self.tam_mapa
 
     def get_casilla(self, posicion: tuple):
-        casilla = self.matriz_mapa[posicion[0]][posicion[1]]
-        return casilla
+        return self.matriz_mapa[posicion[0]][posicion[1]]
 
     def get_animal(self, posicion: tuple):
         return self.get_casilla(posicion).get_animal()
 
     def casilla_es_vacia(self, posicion: tuple):
-        return self.get_animal(posicion) == None
+        return self.matriz_mapa[posicion[0]][posicion[1]].animal == None
 
     def set_animal(self, posicion: tuple, animal):
         self.matriz_mapa[posicion[0]][posicion[1]].set_animal(animal)
-
-    def delete_animal(self, posicion: tuple):
-        self.matriz_mapa[posicion[0]][posicion[1]] = None
-
-    def pop_animal(self, posicion):
-        animal = self.get_animal(posicion)
-        self.delete_animal(posicion)
-        return animal
 
     def __str__(self):
         '''
@@ -104,9 +94,9 @@ class Mapa():
         string = [
             ('--------------------------------------SIMULACION---------------------------------------------------')]
         string += ['\n']
-        for e_c in range(self.tam_mapa[0]):
+        for e_c in range(self.tam_mapa[0]+1):
             aux = []
-            for e_f in range(self.tam_mapa[1]):
+            for e_f in range(self.tam_mapa[1]+1):
                 aux += ['['+str(self.matriz_mapa[e_c]
                                 [e_f])+']']
             aux += ['\n']
@@ -120,13 +110,13 @@ class Mapa():
 class Manada():
     def __init__(self, id: int):
         self.id = id
-        self._contador_ = itertools.count(0)
+        self._contador_ = 0
         self.valor_Contador = 0
         self.mutex = threading.Lock()
 
     def incremento_contador(self):
         self.bloquear()
-        self.valor_Contador = next(self._contador_)
+        self.valor_Contador += 1
         self.desbloquear()
 
     def get_contador(self):
@@ -163,10 +153,13 @@ class Ganador():
     def get_victoria(self):
         return self.victoria
 
+    def __str__(self):
+        return str(self.nombre) + ' HA GANADO EL JUEGO'
+
 
 class Simulacion():
 
-    def __init__(self, n_columnas=20, n_filas=20, n_animales=200, n_manadas=4):
+    def __init__(self, n_columnas=10, n_filas=10, n_animales=60, n_manadas=5):
         self.mapa = Mapa(n_columnas, n_filas)
         self.n_animales = n_animales
         self.ids_animal = itertools.count(1000)
@@ -187,6 +180,7 @@ class Simulacion():
             self.n_cebras, self.n_manadas_cebra, 'C')
         self.colocar_animales(
             self.dic_cebras, self.dic_hienas, self.dic_leones)
+        self.nuevas_threads = []
 
     def inicialzar_threads(self):
         self.inicializar_diccionario(self.dic_cebras)
@@ -194,17 +188,24 @@ class Simulacion():
         self.inicializar_diccionario(self.dic_leones)
 
     def finalizar_threads(self):
-        self.finalizar_diccionario(self.dic_cebras)
-        self.finalizar_diccionario(self.dic_hienas)
+
         self.finalizar_diccionario(self.dic_leones)
+        self.finalizar_diccionario(self.dic_hienas)
+        self.finalizar_diccionario(self.dic_cebras)
+        for thread in self.nuevas_threads:
+            while thread.is_alive():
+                thread.join()
 
     def finalizar_diccionario(self, dic_canimal: dict):
-        for manada, animales in dic_canimal.items():
+        for manada in dic_canimal.keys():
+            animales = dic_canimal[manada]
             for animal in animales:
-                animal.join()
+                while animal.is_alive():
+                    animal.join()
 
     def inicializar_diccionario(self, dic_canimal: dict):
-        for manada, animales in dic_canimal.items():
+        for manada in dic_canimal.keys():
+            animales = dic_canimal[manada]
             for animal in animales:
                 animal.start()
 
@@ -215,8 +216,9 @@ class Simulacion():
         t_print.start()
         self.inicialzar_threads()
         self.finalizar_threads()
-        t_print.join()
-
+        while t_print.is_alive():
+            t_print.join()
+        print(str(self.ganador))
         # aqui iria la variable ganador
 
     def get_mapa(self):
@@ -241,28 +243,32 @@ class Simulacion():
         '''
         dic_animal = {}
         # genero la lista vacia
-        n_animal_restantes = n_animal
-        for manada in range(0, n_manadas_animal):
+        cont_animal_restantes = n_animal
+        cont_manadas_animal = n_manadas_animal
+        while cont_manadas_animal > 0:
+
             # de 0 a n-1, 0 1 recorro las manadas
-            objeto_manada = Manada(manada)
+            objeto_manada = Manada(cont_manadas_animal)
+            cont_manadas_animal -= 1
             # genero un unumero random de la lista
-            if(n_animal_restantes > 1):
-                animales_por_manada = rdm.randint(1, n_animal_restantes)
+            if cont_animal_restantes >= 1:
+                animales_por_manada = rdm.randint(1, cont_animal_restantes)
             else:
                 animales_por_manada = 1
-                # me genero un numero de animales por manada
-            n_animal_restantes = n_animal_restantes-animales_por_manada
+            cont_animal_restantes = cont_animal_restantes-animales_por_manada
             # lo resto para llevar la cuenta
             lista_animales = []
             while animales_por_manada > 0:
                 lista_animales.append(self.generar_animal(tipo, objeto_manada))
                 animales_por_manada -= 1
                 dic_animal[objeto_manada] = lista_animales
-        if n_animal_restantes > 0:
+        if cont_animal_restantes > 0:
             objeto_manada_final = list(dic_animal.keys())[-1]
-            for _ in range(n_animal_restantes):
+            while cont_animal_restantes > 0:
                 dic_animal[objeto_manada_final].append(
                     self.generar_animal(tipo, objeto_manada_final))
+                cont_animal_restantes -= 1
+
         return dic_animal
 
     def generar_animal(self, tipo: str, manada: Manada):
@@ -314,43 +320,38 @@ class Simulacion():
         dic_animales : dict
             [description]
         '''
-
-        for manada, animales in dic_animales.items():
+        print()
+        for manada in dic_animales.keys():
+            animales = dic_animales[manada]
+            print(len(animales))
             vector_esquinas = [(-1, 1), (1, 1), (-1, -1), (1, -1)]
             posicion_inicial = self.get_pos__ini_valida()
             es_vacia = True
             lista_pos_validas = []
             for animal in animales:
 
-                if es_vacia is True:
-                    lista_pos_validas = self.get_lista_pos_validas(
-                        posicion_inicial, vector_esquinas)
-                    vector_esquinas = self.incremento_vector(vector_esquinas)
-                    es_vacia = False
                 if lista_pos_validas == []:
-                    es_vacia = True
-                else:
-                    pos_valida = lista_pos_validas.pop(0)
-                    self.get_mapa().set_animal(pos_valida, animal)
-                    animal.set_posicion(pos_valida)
+                    while lista_pos_validas == []:
+                        lista_pos_validas = self.get_lista_pos_validas(
+                            posicion_inicial, vector_esquinas)
+                        vector_esquinas = self.incremento_vector(
+                            vector_esquinas)
+                pos_valida = lista_pos_validas.pop(0)
+                self.get_mapa().get_casilla(pos_valida).set_animal(animal)
+                animal.set_posicion(pos_valida)
 
     def incremento_vector(self, vector_esquinas: list):
-        list_out = []
-        for esquina in vector_esquinas:
-            list_out.append(self.incremento(esquina))
-        return list_out
 
-    def incremento(self, posicion: tuple):
+        izq_superior = vector_esquinas[0]
+        der_superior = vector_esquinas[1]
+        izq_inferior = vector_esquinas[2]
+        der_inferior = vector_esquinas[3]
+        izq_superior = (izq_superior[0]-1, izq_superior[1]+1)
+        der_superior = (der_superior[0]+1, der_superior[1]+1)
+        izq_inferior = (izq_inferior[0]-1, izq_inferior[1]-1)
+        der_inferior = (der_inferior[0]+1, der_inferior[1]-1)
 
-        if posicion[0] > 0:
-            x = posicion[0] + 1
-        if posicion[0] < 0:
-            x = posicion[0] - 1
-        if posicion[1] > 0:
-            y = posicion[1] + 1
-        if posicion[1] < 0:
-            y = posicion[1] - 1
-        return(x, y)
+        return [izq_superior, der_superior, izq_inferior, der_inferior]
 
     def get_lista_pos_validas(self, posicion: tuple, vector_esquinas: list):
         list_posiciones_validas = []
@@ -358,59 +359,52 @@ class Simulacion():
         esq_der_sup = self.sumatuplas(posicion, vector_esquinas[1])
         esq_izq_inf = self.sumatuplas(posicion, vector_esquinas[2])
         esq_der_inf = self.sumatuplas(posicion, vector_esquinas[3])
-        fila_superior = []
-        fila_inferior = []
-        columna_izquierda = []
-        columna_derecha = []
 
         for x in range(esq_izq_sup[0], esq_der_sup[0]+1):
             temp_pos = (x, esq_izq_sup[1])
-            if self.en_rango(temp_pos) and self.get_mapa().get_animal(temp_pos) == None:
-                fila_superior.append(temp_pos)
+            if self.en_rango(temp_pos) is True:
+                if self.get_mapa().casilla_es_vacia(temp_pos) is True:
+                    list_posiciones_validas.append(temp_pos)
 
         for x in range(esq_izq_inf[0], esq_der_inf[0]+1):
             temp_pos = (x, esq_izq_inf[1])
-            if self.en_rango(temp_pos) and self.get_mapa().get_animal(temp_pos) == None:
-                fila_inferior.append(temp_pos)
+            if self.en_rango(temp_pos):
+                if self.get_mapa().casilla_es_vacia(temp_pos):
+                    list_posiciones_validas.append(temp_pos)
 
-        for y in range(esq_izq_sup[1], esq_der_inf[1]+1):
+        for y in range(esq_izq_inf[1], esq_izq_sup[1]):
             temp_pos = (esq_izq_sup[0], y)
-            if self.en_rango(temp_pos) and self.get_mapa().get_animal(temp_pos) == None:
-                columna_izquierda.append(temp_pos)
+            if self.en_rango(temp_pos):
+                if self.get_mapa().casilla_es_vacia(temp_pos):
+                    list_posiciones_validas.append(temp_pos)
 
-        for y in range(esq_izq_sup[1], esq_der_inf[1]+1):
+        for y in range(esq_der_inf[1], esq_der_sup[1]):
             temp_pos = (esq_izq_sup[0], y)
-            if self.en_rango(temp_pos) and self.get_mapa().get_animal(temp_pos) == None:
-                columna_derecha.append(temp_pos)
+            if self.en_rango(temp_pos):
+                if self.get_mapa().casilla_es_vacia(temp_pos):
+                    list_posiciones_validas.append(temp_pos)
 
-        list_posiciones_validas.extend(fila_superior)
-        list_posiciones_validas.extend(columna_derecha)
-        list_posiciones_validas.extend(fila_inferior)
-        list_posiciones_validas.extend(columna_izquierda)
-        return list_posiciones_validas
+        return list(set(list_posiciones_validas))
 
     def get_pos__ini_valida(self):
         tam_max = self.get_mapa().get_tammapa()
-        encontrada = True
-        while encontrada:
+        while True:
             posicion = (rdm.randint(0, tam_max[0]), rdm.randint(0, tam_max[1]))
             if self.get_mapa().get_animal(posicion) is None:
-                encontrada = False
-
-        return posicion
+                return posicion
 
     def sumatuplas(self, tp_origen: tuple, tp_movimiento: tuple):
         return(tp_origen[0]+tp_movimiento[0], tp_origen[1]+tp_movimiento[1])
 
     def en_rango(self, posicion: tuple):
         leng = self.get_mapa().get_tammapa()
-        if(posicion[0] < leng[0]) and (posicion[1] < leng[1]) and (posicion[0] >= 0) and (posicion[1] >= 0):
+        if(posicion[0] <= leng[0]) and (posicion[1] <= leng[1]) and (posicion[0] >= 0) and (posicion[1] >= 0):
             return True
         return False
 
     def print_table(self):
-        while True:
-            self.clear()
+        while not self.ganador.get_victoria():
+            # self.clear()
             print(self)
             time.sleep(1)
 
@@ -425,5 +419,3 @@ class Simulacion():
 
 
 # Una vez acabe el juego se hace un join de todos los hilos del juego y se cierra
-# While not ganador se ejecuta el juego
-# hacer una clase manada que tenga un mutex en el contador de victoria
